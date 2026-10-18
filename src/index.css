@@ -171,6 +171,16 @@ svg.lucide { stroke-width: 1.5; }
 }
 .brand__tools button:hover { background: var(--ink); color: var(--paper); }
 .brand__total { color: var(--ink); letter-spacing: 0.1em; }
+.brand__sync {
+  border: 1px solid var(--ink);
+  padding: 8px 12px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.brand__sync--online { color: var(--ink); }
+.brand__sync--offline { color: var(--paper); background: var(--ink); }
+.brand__sync--loading { color: var(--muted-fg); border-color: var(--hair); }
 
 /* ===== Katalog: seksi inversi (hitam, teks putih) ===== */
 .katalog {

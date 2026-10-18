@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, History, Search, Trash2, Upload, X } from 'lucide-react';
 import type { Invoice, Product } from './types';
+import { fetchSync, pushSync } from './utils/sync';
 import { InvoiceForm } from './components/InvoiceForm';
 import { InvoicePreview } from './components/InvoicePreview';
 import { ProductManager } from './components/ProductManager';
@@ -129,7 +130,12 @@ export default function App() {
   const [historyQuery, setHistoryQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  /** Status sinkroni lintas perangkat (Upstash Redis via /api/sync). */
+  const [syncStatus, setSyncStatus] = useState<'loading' | 'online' | 'offline'>('loading');
   const snapshotRef = useRef<HTMLDivElement>(null);
+  /** Nilai terkini untuk pull awal (tanpa menambah dependensi effect). */
+  const latest = useRef({ products, history, syncStatus });
+  latest.current = { products, history, syncStatus };
 
   /** TOTAL = akumulasi seluruh nota yang sudah dibuat (riwayat). */
   const historyTotal = useMemo(
@@ -144,6 +150,40 @@ export default function App() {
   useEffect(() => {
     saveToStorage(PRODUCTS_KEY, products);
   }, [products]);
+
+  // ---- Sinkroni: artikel: ket 1x buka halaman, tarik data server (jika ada), else dorong lokal. ----
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const data = await fetchSync();
+        if (!alive) return;
+        const hasServer = (Array.isArray(data.catalog) && data.catalog.length > 0)
+          || (Array.isArray(data.history) && data.history.length > 0);
+        if (hasServer) {
+          if (Array.isArray(data.catalog)) setProducts(data.catalog as Product[]);
+          if (Array.isArray(data.history)) setHistory(data.history as HistoryEntry[]);
+        } else if (latest.current.products.length > 0 || latest.current.history.length > 0) {
+          // Server masih kosong — isi dari perangkat ini (mainanam yang pertama masuk).
+          await pushSync(latest.current.products, latest.current.history);
+        }
+        if (alive) setSyncStatus('online');
+      } catch {
+        if (alive) setSyncStatus('offline');
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // ---- Sinkroni: tulis otomatis (debounce) tiap katalog/riwayat berubah. ----
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void pushSync(products, history)
+        .then(() => setSyncStatus('online'))
+        .catch(() => setSyncStatus('offline'));
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [products, history]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -267,6 +307,11 @@ export default function App() {
         </div>
         <div className="brand__tools">
           <span className="brand__total">Total: {historyTotal.toLocaleString('id-ID')}</span>
+          <span className={`brand__sync brand__sync--${syncStatus}`}>
+            {syncStatus === 'loading' ? 'sinkron…' :
+              syncStatus === 'online' ? 'tersinkron sematikan semua perangkat' :
+              'mode offline — data hanya di perangkat ini'}
+          </span>
         </div>
       </header>
 
