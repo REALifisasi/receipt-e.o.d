@@ -11,20 +11,31 @@ interface ProductManagerProps {
 
 const EMPTY_DRAFT = { id: '', name: '', price: 0, image: '' };
 
-/** Baca file gambar jadi dataURL (diperkecil via canvas agar localStorage aman). */
+/** Resolusi post feed IG: 1080x1350 (rasio 4:5). */
+const IG_W = 1080;
+const IG_H = 1350;
+
+/** Baca file gambar jadi dataURL lalu samakan ke resolusi post feed IG (crop tengah), apapun file yang diupload. */
 const readImageFile = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        const max = 480;
-        const scale = Math.min(1, max / Math.max(img.width, img.height));
         const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-        canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
+        canvas.width = IG_W;
+        canvas.height = IG_H;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Crop tengah (object-fit: cover) agar rasio apapun penuh 4:5.
+          const scale = Math.max(IG_W / img.width, IG_H / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, IG_W, IG_H);
+          ctx.drawImage(img, (IG_W - w) / 2, (IG_H - h) / 2, w, h);
+        }
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
       };
       img.onerror = () => resolve(String(reader.result ?? ''));
       img.src = String(reader.result ?? '');

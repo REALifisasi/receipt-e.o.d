@@ -9,11 +9,12 @@ import {
   HISTORY_KEY,
   PRODUCTS_KEY,
   STORAGE_KEY,
+  buildInvoiceNumber,
   calculateTotals,
-  generateInvoiceNumber,
   loadFromStorage,
   saveToStorage,
   todayISO,
+  uniqCode,
 } from './utils/helpers';
 
 export const DEFAULT_BUSINESS_NAME = 'E.O.D (Electro On Drip)';
@@ -31,8 +32,9 @@ const createEmptyInvoice = (): Invoice => ({
   customer: emptyCustomer(),
   shipTo: emptyCustomer(),
   meta: {
-    number: generateInvoiceNumber(),
+    number: '',
     date: todayISO(),
+    uniq: uniqCode(),
     poNumber: '',
     currency: 'IDR',
     taxRate: 11,
@@ -71,7 +73,9 @@ const normalize = (stored: Invoice, products: Product[] = []): Invoice => {
     customer: { ...emptyCustomer(), ...(stored.customer ?? {}) },
     shipTo: { ...emptyCustomer(), ...((stored as Partial<Invoice>).shipTo ?? {}) },
     meta: {
-      number: meta.number || generateInvoiceNumber(),
+      // Komponen kode unik nota; kode lama (mis. INV/…) dibuang.
+      number: '',
+      uniq: (meta as { uniq?: string }).uniq || uniqCode(),
       date: meta.date || todayISO(),
       poNumber: (meta as { poNumber?: string }).poNumber ?? '',
       currency: meta.currency || 'IDR',
@@ -170,10 +174,14 @@ export default function App() {
       showToast('Isi dulu nama pembeli di BILL TO.');
       return;
     }
-    const freshNumber = generateInvoiceNumber();
+    // Nomor yang tercetak = nomor yang ditampilkan di form (satu sumber, sistem).
+    const freshNumber = buildInvoiceNumber(
+      invoice.customer.name,
+      invoice.meta.uniq || uniqCode(),
+    );
     const stamped: Invoice = {
       ...invoice,
-      meta: { ...invoice.meta, number: freshNumber, date: invoice.meta.date || todayISO() },
+      meta: { ...invoice.meta, number: freshNumber, date: todayISO() },
     };
     setInvoice(stamped);
     // Tunggu panggung jepretan me-render data terbaru

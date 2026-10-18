@@ -72,12 +72,42 @@ export const formatReceiptDate = (iso: string): string => {
     .toUpperCase();
 };
 
-export const generateInvoiceNumber = (): string => {
+/**
+ * Kode receipt: RCP/<tanggal dibuat>/<nama customer>/<kode unik>.
+ * Mis. RCP/18102026/IBNU-AKBAR/K3X9. Nama di-uppercase, spasi jadi strip.
+ */
+const slugCustomer = (name: string): string =>
+  name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'CUSTOMER';
+
+/** ISO (YYYY-MM-DD) -> DD/MM/YYYY. */
+export const fmtDMY = (iso: string): string => {
+  if (!iso) return '-';
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const p = (x: number): string => String(x).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+};
+
+/** Kode unik 4 karakter untuk nomor nota, dibuat sekali per nota. */
+export const uniqCode = (): string => Math.random().toString(36).slice(2, 6).toUpperCase();
+
+/**
+ * Kode receipt yang akan tercetak: RCP/<hari ini>/<nama customer>/<kode unik>.
+ * Mis. RCP/18102026/IBNU-AKBAR/K3X9. Nama di-uppercase, spasi jadi strip.
+ * Satu sumber untuk pratinjau form & file PDF agar nomor yang terlihat
+ * persis sama dengan nomor yang tercetak.
+ */
+export const buildInvoiceNumber = (customerName: string, uniq: string): string => {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const rand = Math.floor(Math.random() * 9000 + 1000);
-  return `INV/${y}${m}/${rand}`;
+  const p = (n: number): string => String(n).padStart(2, '0');
+  const ddmmyyyy = `${p(now.getDate())}${p(now.getMonth() + 1)}${now.getFullYear()}`;
+  return `RCP/${ddmmyyyy}/${slugCustomer(customerName)}/${(uniq || uniqCode()).toUpperCase()}`;
 };
 
 export const todayISO = (): string => new Date().toISOString().slice(0, 10);

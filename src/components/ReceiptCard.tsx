@@ -1,5 +1,5 @@
 import type { Invoice } from '../types';
-import { calculateTotals } from '../utils/helpers';
+import { buildInvoiceNumber, calculateTotals } from '../utils/helpers';
 
 const money = (n: number): string =>
   (Number(n) || 0).toLocaleString('en-US', {
@@ -44,6 +44,9 @@ export const ReceiptCard = ({ invoice }: { invoice: Invoice }) => {
     </div>
   );
 
+  const pendingNumber =
+    invoice.meta.number || buildInvoiceNumber(invoice.customer.name, invoice.meta.uniq || '');
+
   return (
     <div className="rc">
       <div className="rc-bar" />
@@ -55,9 +58,8 @@ export const ReceiptCard = ({ invoice }: { invoice: Invoice }) => {
       </div>
       <div className="rc-cols">
         {party('BILL TO', invoice.customer ?? { name: '', address: '', phone: '' })}
-        {party('SHIP TO', invoice.shipTo ?? { name: '', address: '', phone: '' })}
         <div className="rc-col">
-          <div className="rc-mrow"><b>RECEIPT #</b><span>{invoice.meta.number || '-'}</span></div>
+          <div className="rc-mrow"><b>RECEIPT NO</b><span>{pendingNumber}</span></div>
           <div className="rc-mrow"><b>RECEIPT DATE</b><span>{fmtDMY(invoice.meta.date)}</span></div>
           <div className="rc-mrow"><b>DUE DATE</b><span>{dueDMY(invoice.meta.date)}</span></div>
         </div>

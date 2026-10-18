@@ -219,7 +219,7 @@ svg.lucide { stroke-width: 1.5; }
 .katalog-tile { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
 .katalog-tile__box {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
   width: 100%;
   background: var(--paper);
   border: 1px solid var(--ink);
@@ -368,7 +368,7 @@ svg.lucide { stroke-width: 1.5; }
   grid-template-columns: 1fr auto;
   gap: 16px;
   align-items: baseline;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
   min-height: 44px;
 }
 .receipt-meta__row span {
@@ -389,8 +389,10 @@ svg.lucide { stroke-width: 1.5; }
   font-family: var(--mono);
   font-size: 0.875rem;
   color: var(--ink);
-  width: 170px;
+  width: 260px;
   min-height: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .receipt-meta__row input::placeholder { color: var(--muted-fg); font-style: italic; }
 .receipt-meta__row input:focus { outline: none; border-bottom-color: var(--ink); border-bottom-width: 4px; }
@@ -613,7 +615,7 @@ svg.lucide { stroke-width: 1.5; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.modal-img img { width: 100%; height: 210px; object-fit: cover; display: block; }
+.modal-img img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
 .modal-img span { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 36px; }
 .modal-img em { font-style: normal; }
 
@@ -940,6 +942,101 @@ svg.lucide { stroke-width: 1.5; }
 .record-shot .rc { padding: 20px 22px; }
 .record-actions { justify-content: flex-end; }
 .record-actions .modal-btn { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ===== Responsif perangkat mobile (layar ≤ 640px) ===== */
+@media (max-width: 640px) {
+  /* Header */
+  .brand { padding: 52px 20px 28px; }
+  .brand h1 { font-size: clamp(3.25rem, 17vw, 4.75rem); }
+  .brand__lines { margin-top: 18px; }
+  .brand__tools { gap: 8px; }
+  .brand__tools button { min-height: 40px; padding: 0 14px; }
+
+  /* Panel & seksi */
+  .sheet { padding: 36px 16px 8px; }
+  .katalog { padding: 36px 16px; }
+  .katalog__row { gap: 14px; }
+  .history-strip { padding: 36px 16px; }
+  .history-strip h2 { font-size: 1.5rem; }
+
+  /* Form receipt */
+  .receipt-form__title { margin-bottom: 4px; }
+  .receipt-form__top { grid-template-columns: 1fr; gap: 22px; margin-top: 20px; }
+  .receipt-meta__row { grid-template-columns: min-content minmax(140px, 1fr); gap: 12px; }
+  .receipt-meta__row input { width: 100%; font-size: 1rem; }
+  .receipt-rule { margin: 22px 0; }
+  .receipt-total strong { font-size: clamp(2rem, 9vw, 3rem); }
+  .receipt-bottom { gap: 16px; margin-top: 22px; }
+
+  /* Ekstra (pajak/diskon/catatan) ikut penuh */
+  .receipt-extra { width: 100%; gap: 14px; }
+  .receipt-extra label { flex: 1 1 40%; }
+  .receipt-extra input { width: 100%; }
+  .receipt-extra__notes input { width: 100%; }
+  .receipt-subtotal {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 2px solid var(--ink);
+    padding-top: 12px;
+  }
+
+  /* Tombol export penuh layar */
+  .receipt-export { justify-content: stretch; margin: 26px 0 6px; }
+  .export-btn { width: 100%; padding: 0; }
+
+  /* Kartu barang dibeli: gambar | info | tombol hapus,
+     qty + omzet di baris kedua — tidak ada kolom terbuang */
+  .picked__head { margin-bottom: 10px; }
+  .picked__card {
+    grid-template-columns: 60px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'img info del'
+      'img qty amt';
+    gap: 10px 12px;
+    padding: 12px 2px;
+  }
+  .picked__card > .picked__img { grid-area: img; width: 60px; height: 60px; }
+  .picked__card > .picked__info { grid-area: info; }
+  .picked__card > .picked__info strong { white-space: normal; font-size: 1rem; }
+  .picked__card > .qty-step { grid-area: qty; justify-self: start; }
+  .picked__card > strong.picked__amount { grid-area: amt; align-self: center; justify-self: end; }
+  .picked__card > .receipt-del { grid-area: del; align-self: start; justify-self: end; min-width: 36px; min-height: 36px; }
+
+  /* Modal popup + arsip */
+  .modal-backdrop { padding: 12px; }
+  .modal-card { padding: 20px; max-height: 90vh; }
+  .modal-card__head h3 { font-size: 1.5rem; }
+  .modal-card__actions { justify-content: stretch; }
+  .modal-card__actions .modal-btn { flex: 1; padding: 0 12px; }
+  .record-shot { max-height: 44vh; }
+
+  /* Toast toast */
+  .toast { left: 16px; right: 16px; bottom: 16px; transform: none; text-align: center; padding: 14px 18px; }
+}
+
+/* Kartu struk putih di layar sempit: kolom jatuh, angka kecil */
+@media (max-width: 560px) {
+  .rc { padding: 18px 16px; }
+  .rc-cols { display: block; }
+  .rc-col { display: block; width: auto; margin-bottom: 14px; }
+  .rc-biz h4 { font-size: 17px; }
+  .rc-biz p { font-size: 13px; }
+  .rc-col b { font-size: 13px; }
+  .rc-col p { font-size: 13px; }
+  .rc-mrow b { width: 116px; font-size: 13px; vertical-align: top; }
+  .rc-mrow span { font-size: 13px; word-break: break-all; }
+  .rc-total span, .rc-total strong { font-size: 22px; }
+  .rc-table th { font-size: 13px; }
+  .rc-table td { font-size: 13px; }
+  .rc-sums b { width: 130px; margin-right: 14px; font-size: 13px; }
+  .rc-sums span { width: 90px; font-size: 13px; }
+  .rc-sign { font-size: 22px; min-height: 20px; }
+  .rc-terms b { font-size: 13px; }
+  .rc-terms p { font-size: 13px; }
+  .rc-bar { height: 14px; }
+}
 
 /* Sembunyi di layar, tampil saat cetak */
 .print-only { display: none; }

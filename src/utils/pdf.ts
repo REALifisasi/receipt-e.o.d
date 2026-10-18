@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import type { Invoice } from '../types';
-import { calculateTotals } from './helpers';
+import { calculateTotals, fmtDMY } from './helpers';
 
 const BLUE: [number, number, number] = [0, 0, 0];
 const BLACK: [number, number, number] = [0, 0, 0];
@@ -10,17 +10,6 @@ const money = (n: number): string =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-
-/** ISO (YYYY-MM-DD) -> DD/MM/YYYY seperti contoh. */
-export const fmtDMY = (iso: string): string => {
-  if (!iso) return '-';
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const p = (x: number): string => String(x).padStart(2, '0');
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
-};
 
 /** Jatuh tempo = tanggal nota + 15 hari (sesuai Terms). */
 export const dueDMY = (iso: string): string => {
@@ -69,9 +58,8 @@ export const downloadPDF = (invoice: Invoice): void => {
   });
   y += 8;
 
-  // ---- BILL TO / SHIP TO / META ----
-  const colShip = M + 62;
-  const colMeta = M + 122;
+  // ---- BILL TO / META ----
+  const colMeta = M + 100;
   const topY = y;
 
   const party = (x: number, title: string, c: { name?: string; address?: string; phone?: string }) => {
@@ -84,10 +72,9 @@ export const downloadPDF = (invoice: Invoice): void => {
     doc.text(c.phone?.trim() || '-', x, y + 18);
   };
   party(M, 'BILL TO', invoice.customer ?? { name: '', address: '', phone: '' });
-  party(colShip, 'SHIP TO', invoice.shipTo ?? { name: '', address: '', phone: '' });
 
   const metaRows: [string, string][] = [
-    ['RECEIPT #', invoice.meta.number || '-'],
+    ['RECEIPT NO', invoice.meta.number || '-'],
     ['RECEIPT DATE', fmtDMY(invoice.meta.date)],
     ['DUE DATE', dueDMY(invoice.meta.date)],
   ];
@@ -97,6 +84,15 @@ export const downloadPDF = (invoice: Invoice): void => {
     doc.setFontSize(10.5);
     doc.text(label, colMeta, ry);
     doc.setFont('helvetica', 'normal');
+    // Nilai panjang (nomor RCP/TANGGAL/NAMA/KODE) dikecilkan otomatis
+    // agar tidak menimpa label di kirinya.
+    const maxW = R - colMeta - doc.getTextWidth(label) - 3;
+    let size = 10.5;
+    doc.setFontSize(size);
+    while (doc.getTextWidth(value) > maxW && size > 6.5) {
+      size -= 0.5;
+      doc.setFontSize(size);
+    }
     doc.text(value, R, ry, { align: 'right' });
   });
 
@@ -176,14 +172,8 @@ export const downloadPDF = (invoice: Invoice): void => {
   if (totals.discount > 0) sumRow('Discount', `- ${money(totals.discount)}`);
   if (totals.tax > 0) sumRow(`Sales Tax ${Number(invoice.meta.taxRate) || 0}%`, money(totals.tax));
 
-  // ---- Tanda tangan (nama pembeli, gaya tulis) ----
-  y += 2;
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(20);
-  doc.text(invoice.customer?.name?.trim() || '', colAmt, y, { align: 'right' });
-  y += 14;
-
   // ---- Terms & Conditions ----
+  y += 4;
   if (y > pageH - 55) {
     doc.addPage();
     y = 20;
@@ -205,6 +195,22 @@ export const downloadPDF = (invoice: Invoice): void => {
   // ---- Bar biru bawah ----
   doc.setFillColor(...BLUE);
   doc.rect(M, pageH - 20, contentW, 9, 'F');
+
+  // ---- Watermark "LUNAS" (opacity 50%, tengah halaman) ----
+  const GRAY: [number, number, number] = [160, 160, 160];
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    const w = doc.internal.pageSize.getWidth();
+    const h = doc.internal.pageSize.getHeight();
+    doc.saveGraphicsState();
+    doc.setGState(doc.GState({ opacity: 0.5 }));
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(80);
+    doc.setTextColor(...GRAY);
+    doc.text('LUNAS', w / 2, h / 2, { align: 'center', baseline: 'middle' });
+    doc.restoreGraphicsState();
+  }
 
   const safeName = (invoice.meta.number || 'receipt').replace(/[\\/:*?"<>|]/g, '-');
   doc.save(`${safeName}.pdf`);

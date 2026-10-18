@@ -35,6 +35,8 @@ export interface CustomerInfo {
 export interface InvoiceMeta {
   number: string;
   date: string;
+  /** Komponen kode unik untuk nomor nota (RCP/TANGGAL/NAMA/<kode unik>). */
+  uniq?: string;
   /** Nomor Purchase Order, cth. 2312/2019. */
   poNumber: string;
   currency: string;

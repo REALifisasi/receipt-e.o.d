@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Minus, Plus, Search, Trash2, X } from 'lucide-react';
 import type { Invoice, Product } from '../types';
-import { formatCurrency } from '../utils/helpers';
+import { buildInvoiceNumber, formatCurrency, fmtDMY } from '../utils/helpers';
 
 interface FormProps {
   invoice: Invoice;
@@ -20,9 +20,6 @@ export const InvoiceForm = ({ invoice, products, onChange, onExport }: FormProps
 
   const updateCustomer = (patch: Partial<Invoice['customer']>) =>
     onChange((prev) => ({ ...prev, customer: { ...prev.customer, ...patch } }));
-
-  const updateShipTo = (patch: Partial<Invoice['shipTo']>) =>
-    onChange((prev) => ({ ...prev, shipTo: { ...prev.shipTo, ...patch } }));
 
   const updateMeta = (patch: Partial<Invoice['meta']>) =>
     onChange((prev) => ({ ...prev, meta: { ...prev.meta, ...patch } }));
@@ -92,39 +89,22 @@ export const InvoiceForm = ({ invoice, products, onChange, onExport }: FormProps
           />
         </div>
 
-        <div className="receipt-party">
-          <h3>SHIP TO</h3>
-          <input
-            className="receipt-line-input receipt-line-input--strong"
-            placeholder="input nama penerima"
-            value={invoice.shipTo.name}
-            onChange={(e) => updateShipTo({ name: e.target.value })}
-          />
-          <input
-            className="receipt-line-input"
-            placeholder="input alamat pengiriman"
-            value={invoice.shipTo.address}
-            onChange={(e) => updateShipTo({ address: e.target.value })}
-          />
-          <input
-            className="receipt-line-input"
-            placeholder="input no hape penerima"
-            value={invoice.shipTo.phone}
-            onChange={(e) => updateShipTo({ phone: e.target.value })}
-          />
-        </div>
-
         <div className="receipt-meta">
           <div className="receipt-meta__row">
-            <span>RECEIPT #</span>
-            <input value={invoice.meta.number} readOnly placeholder="otomatis saat export" title="Kode diacak otomatis setiap export" />
+            <span>RECEIPT NO</span>
+            <input
+              value={buildInvoiceNumber(invoice.customer.name, invoice.meta.uniq || '')}
+              readOnly
+              title="Nomor ini yang akan tercetak di PDF"
+            />
           </div>
           <div className="receipt-meta__row">
             <span>RECEIPT DATE</span>
             <input
-              value={invoice.meta.date}
-              onChange={(e) => updateMeta({ date: e.target.value })}
-              placeholder="11/02/2019"
+              value={fmtDMY(invoice.meta.date)}
+              readOnly
+              title="Tanggal otomatis oleh sistem saat export"
+              placeholder="otomatis saat export"
             />
           </div>
         </div>
