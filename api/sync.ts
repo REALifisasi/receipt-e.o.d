@@ -15,6 +15,20 @@ type EnvMap = Record<string, string | undefined>;
 
 const env = (): EnvMap => process.env as unknown as EnvMap;
 
+/**
+ * Baca-kredensial fleksibel: Upstash lex integrasi Vercel bisa memakai prefix
+ * berbeda (UPSTASH_REDIS_REST_*, KV_REST_API_*, atau prefix custom seperti
+ * STORAGE_URL/STORAGE_TOKEN — nama yang ditampilkan di dialog Connect).
+ */
+const upstashCredentials = (): { url: string; token: string } | null => {
+  const e = env();
+  const url = e.UPSTASH_REDIS_REST_URL || e.KV_REST_API_URL || e.STORAGE_URL || e.STORAGE_REST_URL;
+  const token =
+    e.UPSTASH_REDIS_REST_TOKEN || e.KV_REST_API_TOKEN || e.STORAGE_TOKEN || e.STORAGE_REST_TOKEN;
+  if (!url || !token) return null;
+  return { url: url.replace(/\/+$/, ''), token };
+};
+
 const writeJson = (res: ServerResponse, status: number, data: unknown): void => {
   res.statusCode = status;
   res.setHeader('content-type', 'application/json; charset=utf-8');
@@ -23,15 +37,14 @@ const writeJson = (res: ServerResponse, status: number, data: unknown): void => 
 
 /** Kirim satu batch pipeline Redis REST (tanpa dependensi @upstash/redis). */
 const redisPipeline = async (commands: unknown[][]): Promise<unknown[]> => {
-  const { UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN } = env();
-  if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
+  const creds = upstashCredentials();
+  if (!creds) {
     throw new Error('Konfigurasi Upstash untuk project ini belum ada (Storage belum dihubungkan).');
   }
-  const base = UPSTASH_REDIS_REST_URL.replace(/\/+$/, '');
-  const res = await fetch(`${base}/pipeline`, {
+  const res = await fetch(`${creds.url}/pipeline`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
+      Authorization: `Bearer ${creds.token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(commands),
