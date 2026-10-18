@@ -77,12 +77,6 @@ export const InvoicePreview = forwardRef<HTMLDivElement, PreviewProps>(
                 <span>- {formatCurrency(totals.discount, currency)}</span>
               </div>
             ) : null}
-            {totals.tax > 0 ? (
-              <div className="receipt__line">
-                <span>PAJAK ({invoice.meta.taxRate || 0}%):</span>
-                <span>{formatCurrency(totals.tax, currency)}</span>
-              </div>
-            ) : null}
             <div className="receipt__line receipt__line--grand">
               <span>TOTAL:</span>
               <span>{formatCurrency(totals.total, currency)}</span>

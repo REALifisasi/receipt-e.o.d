@@ -97,7 +97,6 @@ export const ReceiptCard = ({ invoice }: { invoice: Invoice }) => {
       <div className="rc-sums">
         <div><b>Subtotal</b><span>{money(totals.subtotal)}</span></div>
         {totals.discount > 0 ? <div><b>Discount</b><span>- {money(totals.discount)}</span></div> : null}
-        {totals.tax > 0 ? <div><b>Sales Tax {Number(invoice.meta.taxRate) || 0}%</b><span>{money(totals.tax)}</span></div> : null}
       </div>
       <div className="rc-sign">{invoice.customer?.name?.trim() || ''}</div>
       <div className="rc-terms">

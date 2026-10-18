@@ -37,7 +37,8 @@ const createEmptyInvoice = (): Invoice => ({
     uniq: uniqCode(),
     poNumber: '',
     currency: 'IDR',
-    taxRate: 11,
+    /** Sales tax dihapus — total hanya subtotal - diskon. */
+    taxRate: 0,
     discount: 0,
     notes: '',
   },

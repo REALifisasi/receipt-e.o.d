@@ -230,15 +230,6 @@ export const InvoiceForm = ({ invoice, products, onChange, onExport }: FormProps
       <div className="receipt-bottom">
         <div className="receipt-extra">
           <label>
-            Pajak (%)
-            <input
-              type="number"
-              min={0}
-              value={invoice.meta.taxRate}
-              onChange={(e) => updateMeta({ taxRate: Number(e.target.value) })}
-            />
-          </label>
-          <label>
             Diskon
             <input
               type="number"

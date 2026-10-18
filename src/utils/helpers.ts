@@ -29,21 +29,19 @@ export const formatCurrency = (value: number, currency = 'IDR'): string => {
 
 export interface Totals {
   subtotal: number;
-  tax: number;
   discount: number;
   total: number;
 }
 
+/** Tanpa pajak/sales tax — total = subtotal - diskon. */
 export const calculateTotals = (invoice: Invoice): Totals => {
   const subtotal = invoice.items.reduce(
     (sum, item) => sum + (Number(item.qty) || 0) * (Number(item.price) || 0),
     0,
   );
   const discount = Number(invoice.meta.discount) || 0;
-  const taxable = Math.max(subtotal - discount, 0);
-  const tax = (taxable * (Number(invoice.meta.taxRate) || 0)) / 100;
-  const total = taxable + tax;
-  return { subtotal, tax, discount, total };
+  const total = Math.max(subtotal - discount, 0);
+  return { subtotal, discount, total };
 };
 
 export const formatDate = (iso: string): string => {

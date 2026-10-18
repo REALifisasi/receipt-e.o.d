@@ -170,7 +170,6 @@ export const downloadPDF = (invoice: Invoice): void => {
   };
   sumRow('Subtotal', money(totals.subtotal));
   if (totals.discount > 0) sumRow('Discount', `- ${money(totals.discount)}`);
-  if (totals.tax > 0) sumRow(`Sales Tax ${Number(invoice.meta.taxRate) || 0}%`, money(totals.tax));
 
   // ---- Terms & Conditions ----
   y += 4;
